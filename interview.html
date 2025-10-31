@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-gray-900">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Interview Practice</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Configuration for Tailwind -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        /* Simple loading spinner */
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid #3498db;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        /* Custom scrollbar for better looks */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #2d3748; /* gray-800 */
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4a5568; /* gray-600 */
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #718096; /* gray-500 */
+        }
+    </style>
+</head>
+<body class="h-full font-sans text-gray-200">
+
+    <div id="app" class="flex flex-col items-center justify-center min-h-full p-4 md:p-8">
+
+        <!-- Page 1: Welcome Screen -->
+        <div id="welcome-screen" class="w-full max-w-md">
+            <div class="bg-gray-800 shadow-xl rounded-lg p-6 md:p-8 border border-gray-700">
+                <h1 class="text-3xl font-bold text-center text-white mb-2">AI Interview Practice</h1>
+                <p class="text-center text-gray-400 mb-6">Enter your name to begin your practice session.</p>
+                
+                <div class="mb-4">
+                    <label for="name" class="block text-sm font-medium text-gray-300 mb-2">Your Name</label>
+                    <input type="text" id="name" class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., Alex Johnson">
+                </div>
+                
+                <button id="start-button" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105">
+                    Start Session
+                </button>
+                <p id="name-error" class="text-red-400 text-sm mt-3 text-center" style="display: none;">Please enter your name.</p>
+            </div>
+        </div>
+
+        <!-- Page 2: Interview Screen (Initially hidden) -->
+        <div id="interview-screen" class="w-full max-w-4xl" style="display: none;">
+            <header class="mb-6">
+                <h1 id="welcome-header" class="text-3xl font-bold text-white"></h1>
+                <p class="text-lg text-gray-400">Let's practice. Generate a scenario to get started.</p>
+            </header>
+
+            <div class="bg-gray-800 shadow-xl rounded-lg p-6 md:p-8 border border-gray-700">
+                
+                <!-- Scenario Section -->
+                <div class="mb-6">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
+                        <h2 class="text-2xl font-semibold text-white mb-2 sm:mb-0">Interview Scenario</h2>
+                        <button id="generate-scenario-button" class="flex items-center justify-center w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out">
+                            <span class="button-text">Generate New Scenario</span>
+                            <span class="spinner button-loader" style="display: none;"></span>
+                        </button>
+                    </div>
+                    <div id="scenario-box" class="w-full min-h-[100px] p-4 bg-gray-700 border border-gray-600 rounded-lg text-gray-300 whitespace-pre-wrap">
+                        Click "Generate New Scenario" to begin.
+                    </div>
+                </div>
+
+                <!-- User Answer Section -->
+                <div class="mb-6">
+                    <h2 class="text-2xl font-semibold text-white mb-4">Your Answer</h2>
+                    <textarea id="user-answer" class="w-full h-48 p-4 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Type your response to the scenario here..."></textarea>
+                </div>
+
+                <!-- Feedback Section -->
+                <div>
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
+                         <h2 class="text-2xl font-semibold text-white mb-2 sm:mb-0">AI Feedback</h2>
+                        <button id="submit-answer-button" class="flex items-center justify-center w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out">
+                            <span class="button-text">Evaluate My Answer</span>
+                            <span class="spinner button-loader" style="display: none;"></span>
+                        </button>
+                    </div>
+                    <div id="feedback-box" class="w-full min-h-[100px] p-4 bg-gray-900 border border-gray-700 rounded-lg text-gray-300 whitespace-pre-wrap">
+                        Submit your answer to receive feedback.
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Reset Button -->
+            <div class="text-center mt-6">
+                <button id="reset-button" class="text-gray-500 hover:text-red-400 transition duration-300 text-sm">
+                    End Session & Change Name
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <script type="module">
+        // --- DOM Elements ---
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const interviewScreen = document.getElementById('interview-screen');
+        const nameInput = document.getElementById('name');
+        const nameError = document.getElementById('name-error');
+        const startButton = document.getElementById('start-button');
+        const welcomeHeader = document.getElementById('welcome-header');
+        const generateScenarioButton = document.getElementById('generate-scenario-button');
+        const scenarioBox = document.getElementById('scenario-box');
+        const userAnswer = document.getElementById('user-answer');
+        const submitAnswerButton = document.getElementById('submit-answer-button');
+        const feedbackBox = document.getElementById('feedback-box');
+        const resetButton = document.getElementById('reset-button');
+
+        // --- API Configuration ---
+        // This is the *relative path* to your Netlify function.
+        // Netlify automatically knows to run the code in /netlify/functions/interview.js
+        // when this URL is called.
+        const netlifyFunctionUrl = '/.netlify/functions/interview';
+
+        let currentScenario = ""; // Store the current scenario for context
+
+        // --- Page Logic ---
+
+        /**
+         * Shows the interview screen and hides the welcome screen.
+         * Sets the welcome header with the user's name.
+         */
+        function showInterviewScreen(name) {
+            welcomeHeader.textContent = `Welcome, ${name}!`;
+            welcomeScreen.style.display = 'none';
+            interviewScreen.style.display = 'block';
+        }
+
+        /**
+         * Shows the welcome screen and hides the interview screen.
+         */
+        function showWelcomeScreen() {
+            welcomeScreen.style.display = 'block';
+            interviewScreen.style.display = 'none';
+        }
+
+        /**
+         * Handles the "Start Session" button click.
+         * Validates and saves the name, then switches pages.
+         */
+        function startSession() {
+            const name = nameInput.value.trim();
+            if (name) {
+                localStorage.setItem('interview_user_name', name);
+                showInterviewScreen(name);
+                nameError.style.display = 'none';
+            } else {
+                nameError.style.display = 'block';
+            }
+        }
+
+        /**
+         * Resets the session, clears localStorage, and returns to the welcome screen.
+         */
+        function endSession() {
+            localStorage.removeItem('interview_user_name');
+            nameInput.value = "";
+            scenarioBox.textContent = 'Click "Generate New Scenario" to begin.';
+            userAnswer.value = "";
+            feedbackBox.textContent = 'Submit your answer to receive feedback.';
+            currentScenario = "";
+            showWelcomeScreen();
+        }
+
+        // --- Event Listeners ---
+        startButton.addEventListener('click', startSession);
+        resetButton.addEventListener('click', endSession);
+        
+        // Allow pressing Enter to start session
+        nameInput.addEventListener('keyup', (event) => {
+            if (event.key === 'Enter') {
+                startSession();
+            }
+        });
+
+        /**
+         * Check for a saved name on page load.
+         */
+        window.addEventListener('load', () => {
+            const savedName = localStorage.getItem('interview_user_name');
+            if (savedName) {
+                showInterviewScreen(savedName);
+            } else {
+                showWelcomeScreen();
+            }
+        });
+
+        // --- Netlify Function / API ---
+
+        /**
+         * Toggles the loading state for a button.
+         * @param {HTMLButtonElement} button - The button element.
+         * @param {boolean} isLoading - The loading state.
+         */
+        function setButtonLoading(button, isLoading) {
+            const buttonText = button.querySelector('.button-text');
+            const buttonLoader = button.querySelector('.button-loader');
+            
+            if (isLoading) {
+                buttonText.style.display = 'none';
+                buttonLoader.style.display = 'inline-block';
+                button.disabled = true;
+            } else {
+                buttonText.style.display = 'inline-block';
+                buttonLoader.style.display = 'none';
+                button.disabled = false;
+            }
+        }
+
+        /**
+         * A wrapper for calling our Netlify function.
+         * @param {string} userPrompt - The user's query.
+         * @param {string} systemPrompt - The system instruction to guide the AI.
+         * @returns {Promise<string>} The generated text content.
+         */
+        async function callNetlifyFunction(userPrompt, systemPrompt) {
+            
+            const payload = {
+                userPrompt,
+                systemPrompt
+            };
+
+            let retries = 0;
+            const maxRetries = 5;
+            let delay = 1000; // 1 second
+
+            while (retries < maxRetries) {
+                try {
+                    const response = await fetch(netlifyFunctionUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Function error! status: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    
+                    if (result.text) {
+                        return result.text;
+                    } else {
+                        throw new Error(result.error || "Invalid response structure from function.");
+                    }
+
+                } catch (error) {
+                    console.error(`Netlify function call failed (attempt ${retries + 1}):`, error);
+                    retries++;
+                    if (retries < maxRetries) {
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        delay *= 2; // Exponential backoff
+                    } else {
+                        return `Error: Unable to get a response from the AI. ${error.message}`;
+                    }
+                }
+            }
+        }
+
+        /**
+         * Handles the "Generate New Scenario" button click.
+         */
+        generateScenarioButton.addEventListener('click', async () => {
+            setButtonLoading(generateScenarioButton, true);
+            scenarioBox.textContent = "Generating scenario...";
+            feedbackBox.textContent = "Submit your answer to receive feedback."; // Reset feedback
+            userAnswer.value = ""; // Clear old answer
+
+            const systemPrompt = "You are an expert interviewer for a corporate job (e.g., software engineer, project manager, marketing). Provide a single, concise, scenario-based interview question. The question should be 2-3 sentences long. Do not add any preamble like 'Here is your scenario:'.";
+            const userPrompt = "Generate a new scenario-based interview question for me to practice.";
+
+            const scenario = await callNetlifyFunction(userPrompt, systemPrompt);
+            
+            currentScenario = scenario; // Store for context
+            scenarioBox.textContent = scenario;
+            setButtonLoading(generateScenarioButton, false);
+        });
+
+        /**
+         * Handles the "Submit Answer" button click.
+         */
+        submitAnswerButton.addEventListener('click', async () => {
+            const answer = userAnswer.value.trim();
+            
+            if (!currentScenario) {
+                feedbackBox.textContent = "Please generate a scenario first.";
+                return;
+            }
+            if (!answer) {
+                feedbackBox.textContent = "Please type an answer before submitting.";
+                return;
+            }
+
+            setButtonLoading(submitAnswerButton, true);
+            feedbackBox.textContent = "Evaluating your answer...";
+
+            const systemPrompt = `You are a helpful and constructive interview coach.
+The user was given this scenario:
+"${currentScenario}"
+
+The user's answer is:
+"${answer}"
+
+Please provide concise, constructive feedback on their answer.
+1.  Start with what they did well (Strengths).
+2.  Then, suggest areas for improvement (Areas for Improvement).
+Use markdown for formatting (e.g., **Strengths:**, *Improvement:*). Keep the feedback to a few bullet points for each section.`;
+            const userPrompt = "Please evaluate my answer to the scenario.";
+
+            const feedback = await callNetlifyFunction(userPrompt, systemPrompt);
+            
+            // A simple way to render markdown bold/italics (replace **text** with <strong>)
+            let formattedFeedback = feedback
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold
+                .replace(/\*(.*?)\*/g, '<em>$1</em>'); // Italics
+
+            feedbackBox.innerHTML = formattedFeedback; // Use innerHTML to render the formatted text
+            setButtonLoading(submitAnswerButton, false);
+        });
+
+    </script>
+
+</body>
+</html>
+
