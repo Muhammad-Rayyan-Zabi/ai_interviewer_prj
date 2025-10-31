@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-gray-900">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Interview - Welcome</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                },
+            },
+        }
+    </script>
+</head>
+<body class="h-full font-sans text-gray-200">
+    <div id="app" class="flex flex-col items-center justify-center min-h-full p-4 md:p-8">
+        <div id="welcome-screen" class="w-full max-w-md">
+            <div class="bg-gray-800 shadow-xl rounded-lg p-6 md:p-8 border border-gray-700">
+                <h1 class="text-3xl font-bold text-center text-white mb-2">AI Interview Practice</h1>
+                <p class="text-center text-gray-400 mb-6">Enter your name to begin your practice session.</p>
+                <div class="mb-4">
+                    <label for="name" class="block text-sm font-medium text-gray-300 mb-2">Your Name</label>
+                    <input type="text" id="name" class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., Alex Johnson">
+                </div>
+                <button id="start-button" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105">
+                    Start Session
+                </button>
+                <p id="name-error" class="text-red-400 text-sm mt-3 text-center" style="display: none;">Please enter your name.</p>
+            </div>
+        </div>
+    </div>
+    <script>
+        const nameInput = document.getElementById('name');
+        const startButton = document.getElementById('start-button');
+        const nameError = document.getElementById('name-error');
+
+        function startSession() {
+            const name = nameInput.value.trim();
+            if (name) {
+                localStorage.setItem('interview_user_name', name);
+                window.location.href = 'interview.html';
+                nameError.style.display = 'none';
+            } else {
+                nameError.style.display = 'block';
+            }
+        }
+        startButton.addEventListener('click', startSession);
+        nameInput.addEventListener('keyup', (event) => {
+            if (event.key === 'Enter') {
+                startSession();
+            }
+        });
+    </script>
+</body>
+</html>

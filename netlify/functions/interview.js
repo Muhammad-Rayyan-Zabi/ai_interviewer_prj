@@ -1,31 +1,27 @@
-// This file goes in `netlify/functions/interview.js`
-
-// Use dynamic import for node-fetch
+// Use dynamic import for node-fetch, required for v3+
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
 // The Gemini API model and URL
-const apiModel = "gemini-2.5-flash-preview-09-2025"; // <-- This is the correct model
+const apiModel = "gemini-2.5-flash-preview-09-2025";
 const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${apiModel}:generateContent`;
 
 exports.handler = async (event) => {
-    // 1. Check if it's a POST request
     if (event.httpMethod !== 'POST') {
         return { statusCode: 405, body: 'Method Not Allowed' };
     }
 
-    // 2. Securely get the API key from Netlify's environment variables
-    //    You must set this in your Netlify site settings!
-    //    Variable name: GEMINI_API_KEY
+    // --- THIS IS THE SECURE PART ---
+    // It reads the key from Netlify's settings, not from the code.
     const apiKey = process.env.GEMINI_API_KEY;
 
     if (!apiKey) {
         return {
             statusCode: 500,
-            body: JSON.stringify({ error: "API key is not set. Set GEMINI_API_KEY in Netlify environment variables." })
+            body: JSON.stringify({ error: "API key is not set. Set GEMINI_API_KEY in Netlify env variables." })
         };
     }
+    // ---------------------------------
 
-    // 3. Parse the prompts from the HTML file's request
     let body;
     try {
         body = JSON.parse(event.body);
@@ -34,20 +30,15 @@ exports.handler = async (event) => {
     }
 
     const { userPrompt, systemPrompt } = body;
-
     if (!userPrompt || !systemPrompt) {
-        return { statusCode: 400, body: JSON.stringify({ error: "Bad request: Missing userPrompt or systemPrompt." }) };
+        return { statusCode: 400, body: JSON.stringify({ error: "Bad request: Missing prompts." }) };
     }
 
-    // 4. Construct the payload for the Gemini API
     const payload = {
         contents: [{ parts: [{ text: userPrompt }] }],
-        systemInstruction: {
-            parts: [{ text: systemPrompt }]
-        },
+        systemInstruction: { parts: [{ text: systemPrompt }] },
     };
 
-    // 5. Call the Gemini API
     try {
         const fullApiUrl = `${apiUrl}?key=${apiKey}`;
         
@@ -63,10 +54,9 @@ exports.handler = async (event) => {
         }
 
         const result = await response.json();
+        const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
 
-        // 6. Extract the text and send it back to the HTML file
-        if (result.candidates && result.candidates[0].content.parts[0].text) {
-            const text = result.candidates[0].content.parts[0].text;
+        if (text) {
             return {
                 statusCode: 200,
                 body: JSON.stringify({ text: text })
@@ -74,7 +64,6 @@ exports.handler = async (event) => {
         } else {
             throw new Error("Invalid response structure from Google API.");
         }
-
     } catch (error) {
         console.error("Function error:", error);
         return {
